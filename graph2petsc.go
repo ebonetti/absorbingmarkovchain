@@ -3,36 +3,12 @@ package absorbingmarkovchain
 import (
 	"bufio"
 	"encoding/binary"
-	"fmt"
 	"os"
 	"sort"
 
 	"github.com/RoaringBitmap/roaring"
 	"github.com/pkg/errors"
 )
-
-func (g dGraph) Print() {
-	for i := g.Nodes.Iterator(); i.HasNext(); {
-		from := i.Next()
-		fmt.Println(from, g.Edges(from))
-	}
-}
-
-func (g wDGraph) Print() {
-	for i := g.Nodes.Iterator(); i.HasNext(); {
-		from := i.Next()
-		to := g.Edges(from)
-		ww := []float64{}
-		for _, to := range to {
-			if w, err := g.Weighter(from, to); err != nil {
-				panic(err)
-			} else {
-				ww = append(ww, w)
-			}
-		}
-		fmt.Println(from, to, ww)
-	}
-}
 
 func graph2Petsc(chain *AbsorbingMarkovChain, filepath string) (ttn, tan translator, err error) {
 	fail := func(e error) (translator, translator, error) {

@@ -9,7 +9,7 @@ type dGraph struct {
 	Edges func(from uint32) (to []uint32)
 }
 
-func (gin dGraph) AddSelfLoops() (gout dGraph) {
+func (gin dGraph) addSelfLoops() (gout dGraph) {
 	gout.Edges = func(from uint32) (to []uint32) {
 		to = gin.Edges(from)
 		if match, p := uint32Exist(to, from); !match {
@@ -22,7 +22,7 @@ func (gin dGraph) AddSelfLoops() (gout dGraph) {
 	return
 }
 
-func (gin dGraph) FilterNodes(blacklist *roaring.Bitmap) (gout dGraph) {
+func (gin dGraph) filterNodes(blacklist *roaring.Bitmap) (gout dGraph) {
 	blacklistArray := blacklist.ToArray()
 	gout.Edges = func(from uint32) (to []uint32) {
 		if blacklist.Contains(from) {
@@ -68,7 +68,7 @@ func (gin dGraph) FilterNodes(blacklist *roaring.Bitmap) (gout dGraph) {
 	return
 }
 
-func (gin dGraph) NormalizedIDs() (gout dGraph, t translator) {
+func (gin dGraph) normalizedIDs() (gout dGraph, t translator) {
 	new2OldID := gin.Nodes.ToArray()
 	l := len(new2OldID)
 	gout.Edges = func(from uint32) (to []uint32) {
@@ -94,7 +94,7 @@ type wDGraph struct {
 	Weighter func(from, to uint32) (weight float64, err error)
 }
 
-func (gin wDGraph) NormalizedWeights() (gout wDGraph, err error) {
+func (gin wDGraph) normalizedWeights() (gout wDGraph, err error) {
 	nodeCount := uint32(gin.Nodes.GetCardinality())
 	weightSum := make([]float64, 0, nodeCount)
 	weights := make([]float64, 0, 1024)
@@ -136,7 +136,7 @@ func (gin wDGraph) NormalizedWeights() (gout wDGraph, err error) {
 	return
 }
 
-func (gin wDGraph) AddSelfLoops() (gout wDGraph) {
+func (gin wDGraph) addSelfLoops() (gout wDGraph) {
 	gout.Weighter = func(from, to uint32) (weight float64, err error) {
 		weight, err = gin.Weighter(from, to)
 		if from != to {
@@ -155,13 +155,13 @@ func (gin wDGraph) AddSelfLoops() (gout wDGraph) {
 		return
 	}
 
-	gout.dGraph = gin.dGraph.AddSelfLoops()
+	gout.dGraph = gin.dGraph.addSelfLoops()
 
 	return
 }
 
-func (gin wDGraph) NormalizedIDs() (gout wDGraph, t translator) {
-	gout.dGraph, t = gin.dGraph.NormalizedIDs()
+func (gin wDGraph) normalizedIDs() (gout wDGraph, t translator) {
+	gout.dGraph, t = gin.dGraph.normalizedIDs()
 
 	gout.Weighter = func(from, to uint32) (weight float64, err error) {
 		if to, err = t.ToOld(to); err != nil {
