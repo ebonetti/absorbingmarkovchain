@@ -5,7 +5,7 @@ all: GMRES.o  chkopts
 	${CLINKER} -o GMRES GMRES.o  ${PETSC_KSP_LIB}
 
 run: all
-	${MPIEXEC} ./GMRES -if ${IFPATH} -of ${OFPATH} -imax ${IMAX}
+	${MPIEXEC} ./GMRES -if ${IFPATH} -of ${OFPATH}
 	
 cleanall:
 	${RM} GMRES.o GMRES

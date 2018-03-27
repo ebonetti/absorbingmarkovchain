@@ -5,7 +5,6 @@ static char help[] = "Use GMRES to solve linear systems\n\n";
 
 
 typedef struct{
-    PetscInt       i,imax;
     char           ifname[PETSC_MAX_PATH_LEN],ofname[PETSC_MAX_PATH_LEN];
 } Parameter;
 
@@ -27,7 +26,6 @@ int main(int argc,char **argv) {
     ierr = PetscBagSetName(bag,"ParameterBag","contains parameters for script");CHKERRQ(ierr);
     ierr = PetscBagRegisterString(bag,&params->ifname,PETSC_MAX_PATH_LEN,"Ab.ptsc","if","Name of input file file");CHKERRQ(ierr);
     ierr = PetscBagRegisterString(bag,&params->ofname,PETSC_MAX_PATH_LEN,"sol.matlab","of","Name of output file file");CHKERRQ(ierr);
-    ierr = PetscBagRegisterInt   (bag,&params->imax, 0,"imax","Number of vectors");CHKERRQ(ierr);
 
     // Open input file
     ierr = PetscViewerBinaryOpen(PETSC_COMM_WORLD,params->ifname,FILE_MODE_READ,&ifd);CHKERRQ(ierr);
@@ -51,11 +49,11 @@ int main(int argc,char **argv) {
     ierr = KSPSetFromOptions(ksp);CHKERRQ(ierr);
 
     ierr = VecCreate(PETSC_COMM_WORLD,&b);CHKERRQ(ierr);
-    for (params->i=0; params->i < params->imax; params->i++){
-        ierr = VecLoad(b,ifd); CHKERRQ(ierr);
+    for (ierr = VecLoad(b,ifd); !ierr; ierr = VecLoad(b,ifd)){
         ierr = KSPSolve(ksp,b,b);CHKERRQ(ierr);
         ierr = VecView(b,ofd);CHKERRQ(ierr);
     }
+    CHKERRQ(ierr == PETSC_ERR_FILE_READ? 0 : ierr);
 
     //Free work space.
     ierr = PetscViewerDestroy(&ifd);CHKERRQ(ierr);

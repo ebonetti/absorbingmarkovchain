@@ -26,4 +26,4 @@ API documentation can be found here: http://godoc.org/github.com/ebonetti/absorb
 Dependencies
 -------------
 
-This package depends on: make, gcc and petsc. The associated dockerfile provides a complete environment in which use the package.
+This package depends on: `make`, `gcc` and `petsc`. The associated dockerfile provides a complete environment in which use the package.

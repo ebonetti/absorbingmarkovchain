@@ -2,22 +2,19 @@
 package absorbingmarkovchain
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"io/ioutil"
 	"math"
 	"math/rand"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime/debug"
 
 	"github.com/RoaringBitmap/roaring"
 	"github.com/pkg/errors"
-)
 
-// TODO: extend ctx support
+	"github.com/ebonetti/absorbingmarkovchain/internal/gmres"
+)
 
 // New creates a new absorbing markov chain.
 func New(nodes, absorbingNodes *roaring.Bitmap, edges func(from uint32) (to []uint32), weighter func(from, to uint32) (weight float64, err error)) *AbsorbingMarkovChain {
@@ -38,14 +35,6 @@ type AbsorbingMarkovChain struct {
 	wDGraph
 	absorbingNodes *roaring.Bitmap
 }
-
-//go:generate go-bindata -pkg $GOPACKAGE petsc-gmres/...
-
-const (
-	solverDir     = "petsc-gmres"
-	solverInfile  = "Ab.ptsc"
-	solverOutfile = "sol.matlab"
-)
 
 // AbsorptionProbabilities calculates absorption probabilities for the current absorbing markov chain.
 func (chain *AbsorbingMarkovChain) AbsorptionProbabilities(ctx context.Context) (weighter func(from, to uint32) (weight float64, err error), err error) {
@@ -132,33 +121,16 @@ func (chain *AbsorbingMarkovChain) absorptionProbabilities(ctx context.Context, 
 		return fail(err)
 	}
 
-	var dir string
-	if dir, err = os.Getwd(); err != nil {
-		return fail(errors.Wrap(err, "AbsorbingMarkovChain Error: error while unable to locate current working directory."))
-	}
-	if dir, err = ioutil.TempDir(dir, "."); err != nil {
+	var tmpDir string
+	if tmpDir, err = ioutil.TempDir(".", "."); err != nil {
 		return fail(errors.Wrap(err, "AbsorbingMarkovChain Error: unable to create a temporary directory."))
 	}
-	defer os.RemoveAll(dir)
-
-	if err = RestoreAssets(dir, solverDir); err != nil {
-		return fail(err)
-	}
-
-	cmd := exec.CommandContext(ctx,
-		"make",
-		"run",
-		"IFPATH="+solverInfile,
-		"OFPATH="+solverOutfile,
-		fmt.Sprint("IMAX=", chain.absorbingNodes.GetCardinality()))
-
-	var cmdStderr bytes.Buffer
-	cmd.Stderr = &cmdStderr
-	cmd.Dir = filepath.Join(dir, solverDir)
-	defer os.RemoveAll(cmd.Dir)
+	defer os.RemoveAll(tmpDir)
+	solverInfile := filepath.Join(tmpDir, "Ab.ptsc")
+	solverOutfile := filepath.Join(tmpDir, "sol.matlab")
 
 	//transform wikigraph to Ab.petsc
-	if ttn, tan, err = graph2Petsc(chain, filepath.Join(cmd.Dir, solverInfile)); err != nil {
+	if ttn, tan, err = graph2Petsc(chain, solverInfile); err != nil {
 		return fail(err)
 	}
 
@@ -168,12 +140,12 @@ func (chain *AbsorbingMarkovChain) absorptionProbabilities(ctx context.Context, 
 	debug.FreeOSMemory()
 
 	//run solver
-	if err = cmd.Run(); err != nil {
-		return fail(errors.Wrap(err, "AbsorbingMarkovChain Error: call to external command - PETSc GMRES - failed, with the following error stream:\n"+cmdStderr.String()))
+	if err = gmres.Run(ctx, solverInfile, solverOutfile, tmpDir); err != nil {
+		return fail(err)
 	}
 
 	//transform back from sol.matlab
-	if fuzzyAssignments, err = petsc2Assignments(ttn, tan, filepath.Join(cmd.Dir, solverOutfile)); err != nil {
+	if fuzzyAssignments, err = petsc2Assignments(ttn, tan, solverOutfile); err != nil {
 		return fail(err)
 	}
 
@@ -181,27 +153,49 @@ func (chain *AbsorbingMarkovChain) absorptionProbabilities(ctx context.Context, 
 }
 
 func (chain *AbsorbingMarkovChain) checkRequirements() (err error) { //for absorbing markov chain
-	fail := func(e error) error {
-		err = e
-		return err
-	}
-
 	if chain == nil {
 		return errors.New("AbsorbingMarkovChain Error: nil chain")
 	}
 
+	if err = chain.checkGraphNodes(); err == nil {
+		return
+	}
+
+	nodes := roaring.NewBitmap()
+
+	if err = chain.checkAbsorbingNodes(nodes); err == nil {
+		return
+	}
+
+	if err = chain.checkTransientNodes(nodes); err == nil {
+		return
+	}
+
+	if nodes.GetCardinality() != chain.Nodes.GetCardinality() {
+		v, _ := roaring.AndNot(chain.Nodes, nodes).Select(0)
+		return errors.Errorf("%v isn't transient node, neither it's declared absorbing.", v)
+	}
+
+	chain.Weighter = checkedWeighter(chain.Weighter)
+
+	return
+}
+
+func (chain *AbsorbingMarkovChain) checkGraphNodes() (err error) {
 	nodes := chain.Nodes
 	for i := nodes.Iterator(); i.HasNext(); {
 		from := i.Next()
 		to := chain.Edges(from)
 		for _, id := range to {
 			if !nodes.Contains(id) {
-				return fail(errors.Errorf("arc (%v,%v) shouldn't exist: %v isn't a graph node.", from, id, id))
+				return errors.Errorf("arc (%v,%v) shouldn't exist: %v isn't a graph node.", from, id, id)
 			}
 		}
 	}
+	return
+}
 
-	whitelist := roaring.NewBitmap()
+func (chain *AbsorbingMarkovChain) checkAbsorbingNodes(nodes *roaring.Bitmap) (err error) {
 	for i := chain.absorbingNodes.Iterator(); i.HasNext(); {
 		ANode := i.Next()
 		to := chain.Edges(ANode)
@@ -209,22 +203,25 @@ func (chain *AbsorbingMarkovChain) checkRequirements() (err error) { //for absor
 		case len(to) > 1:
 			fallthrough
 		case len(to) == 1 && to[0] != ANode:
-			return fail(errors.Errorf("%v is not a valid absorbing node.", ANode))
+			return errors.Errorf("%v is not a valid absorbing node.", ANode)
 		default:
-			whitelist.Add(ANode)
+			nodes.Add(ANode)
 		}
 	}
+	return
+}
 
+func (chain *AbsorbingMarkovChain) checkTransientNodes(nodes *roaring.Bitmap) (err error) {
 	changed := true
 	for changed {
 		changed = false
 		for i := roaring.AndNot(chain.Nodes, chain.absorbingNodes).Iterator(); i.HasNext(); {
 			from := i.Next()
-			if !whitelist.Contains(from) {
+			if !nodes.Contains(from) {
 				to := chain.Edges(from)
 				for _, id := range to {
-					if whitelist.Contains(id) {
-						whitelist.Add(from)
+					if nodes.Contains(id) {
+						nodes.Add(from)
 						changed = true
 						break
 					}
@@ -232,13 +229,6 @@ func (chain *AbsorbingMarkovChain) checkRequirements() (err error) { //for absor
 			}
 		}
 	}
-	if whitelist.GetCardinality() != nodes.GetCardinality() {
-		v, _ := roaring.AndNot(nodes, whitelist).Select(0)
-		return fail(errors.Errorf("%v isn't transient node, neither it's declared absorbing.", v))
-	}
-
-	chain.Weighter = checkedWeighter(chain.Weighter)
-
 	return
 }
 
