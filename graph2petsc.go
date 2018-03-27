@@ -61,7 +61,7 @@ func _graph2Petsc(chain *AbsorbingMarkovChain, write func(...interface{})) (ttn,
 		ttn, tan, err = nil, nil, e
 		return ttn, tan, err
 	}
-	g := chain.FilterNodes(chain.absorbingNodes).AddSelfLoops()
+	g := chain.filterNodes(chain.absorbingNodes).addSelfLoops()
 	n := uint32(g.Nodes.GetCardinality())
 	entries, rowEntries := uint32(0), make([]uint32, 0, n)
 	for i := g.Nodes.Iterator(); i.HasNext(); {
@@ -70,9 +70,9 @@ func _graph2Petsc(chain *AbsorbingMarkovChain, write func(...interface{})) (ttn,
 		entries += l
 		rowEntries = append(rowEntries, l)
 	}
-	g, ttn = g.NormalizedIDs()
+	g, ttn = g.normalizedIDs()
 
-	wg, err := chain.NormalizedWeights()
+	wg, err := chain.normalizedWeights()
 	if err != nil {
 		return fail(err)
 	}
@@ -80,8 +80,8 @@ func _graph2Petsc(chain *AbsorbingMarkovChain, write func(...interface{})) (ttn,
 	if err != nil {
 		return fail(err)
 	}
-	wg = wg.AddSelfLoops()
-	wg.dGraph = wg.dGraph.FilterNodes(chain.absorbingNodes)
+	wg = wg.addSelfLoops()
+	wg.dGraph = wg.dGraph.filterNodes(chain.absorbingNodes)
 
 	/*
 			MAT_FILE_CLASSID //matrix file identifier
