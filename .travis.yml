@@ -32,11 +32,7 @@ notifications:
 # set -e enabled in bash. 
 before_script:
   - "sudo apt-get update" 
-<<<<<<< HEAD
   - "sudo apt-get install petsc-dev"
-=======
-  - "sudo apt-get install petsc"
->>>>>>> 7d2fb12a0d5209d99879e97133177268e2f00208
   - GO_FILES=$(find . -iname '*.go' -type f | grep -v /vendor/) # All the .go files, excluding vendor/
   - go get github.com/golang/lint/golint                        # Linter
   - go get honnef.co/go/tools/cmd/megacheck                     # Badass static analyzer/linter
