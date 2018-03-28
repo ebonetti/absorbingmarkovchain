@@ -1,5 +1,7 @@
 sudo: required
 
+language: go
+
 notifications:
   email: false
 
@@ -9,22 +11,21 @@ services:
 before_install:
   # Use the image from dockerhub if it's updated.
 - docker build --cache-from ebonetti/golang-petsc -t ebonetti/golang-petsc .
-- docker build -t test-env -<<EOF
-FROM ebonetti/golang-petsc \
-RUN  set -eux; \
+- |
+  docker build -t test-env -<<EOF
+  FROM ebonetti/golang-petsc
+  RUN  set -eux; \
   go get honnef.co/go/tools/cmd/megacheck/...; \
-  go get github.com/fzipp/gocyclo/...; \
   go get github.com/mattn/goveralls/...; \
-  go get github.com/ebonetti/absorbingmarkovchain/...; \
-WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain; \
-EOF
+  go get github.com/ebonetti/absorbingmarkovchain/...;
+  WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain;
+  EOF
 - docker run -d --name test-env test-env sleep 600
 - docker ps -a
 
 script:
 - docker exec test-env go test -v -race ./...
 - docker exec test-env megacheck ./...
-- docker exec test-env gocyclo -over 19 ./...
 - docker exec test-env goveralls ./...
 
 after_script:
