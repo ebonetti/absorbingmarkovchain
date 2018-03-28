@@ -160,7 +160,7 @@ func (gin wDGraph) addSelfLoops() (gout wDGraph) {
 	return
 }
 
-func (gin wDGraph) normalizedIDs() (gout wDGraph, t translator) {
+/*func (gin wDGraph) normalizedIDs() (gout wDGraph, t translator) {
 	gout.dGraph, t = gin.dGraph.normalizedIDs()
 
 	gout.Weighter = func(from, to uint32) (weight float64, err error) {
@@ -177,4 +177,4 @@ func (gin wDGraph) normalizedIDs() (gout wDGraph, t translator) {
 	}
 
 	return
-}
+}*/
