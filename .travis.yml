@@ -9,7 +9,8 @@ services:
   - docker
 
 before_install:
-  # Use the image from dockerhub if it's updated.
+- docker pull ebonetti/golang-petsc
+  # Use the image from dockerhub only if it's updated.
 - docker build --cache-from ebonetti/golang-petsc -t ebonetti/golang-petsc .
 - |
   docker build -t test-env -<<EOF
