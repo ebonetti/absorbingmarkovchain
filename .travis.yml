@@ -15,15 +15,13 @@ before_install:
 - |
   docker build -t test-env -<<<'
   FROM ebonetti/golang-petsc
-  ARG var_name
-  ENV env_var_name=$var_name
   RUN  set -eux; \
   go get honnef.co/go/tools/cmd/megacheck/...; \
   go get github.com/mattn/goveralls/...; \
   go get github.com/ebonetti/absorbingmarkovchain/...;
   WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain
   '
-- docker run -d -e COVERALLS_REPO_TOKEN --name test-env test-env sleep 600
+- docker run -d -e COVERALLS_TOKEN --name test-env test-env sleep 600
 - docker ps -a
 
 script:
