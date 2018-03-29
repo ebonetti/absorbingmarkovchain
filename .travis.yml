@@ -30,4 +30,4 @@ script:
 - docker exec test-env goveralls
 
 after_script:
-- docker rm -f app
+- docker rm -f test-env
