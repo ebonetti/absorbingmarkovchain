@@ -13,14 +13,14 @@ before_install:
   # Use the image from dockerhub only if it's updated.
 - docker build --cache-from ebonetti/golang-petsc -t ebonetti/golang-petsc .
 - |
-  docker build -t test-env -<<EOF
-  FROM ebonetti/golang-petsc
-  RUN  set -eux; \
-  go get honnef.co/go/tools/cmd/megacheck/...; \
-  go get github.com/mattn/goveralls/...; \
-  go get github.com/ebonetti/absorbingmarkovchain/...;
+  docker build -t test-env -<<<'
+  FROM ebonetti/golang-petsc\n
+  RUN  set -eux;
+  go get honnef.co/go/tools/cmd/megacheck/...;
+  go get github.com/mattn/goveralls/...;
+  go get github.com/ebonetti/absorbingmarkovchain/...;\n
   WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain;
-  EOF
+  '
 - docker run -d --name test-env test-env sleep 600
 - docker ps -a
 
