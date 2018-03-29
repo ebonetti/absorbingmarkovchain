@@ -1,6 +1,6 @@
 sudo: required
 
-language: go
+install: true
 
 notifications:
   email: false
@@ -19,7 +19,7 @@ before_install:
   go get honnef.co/go/tools/cmd/megacheck/...; \
   go get github.com/mattn/goveralls/...; \
   go get github.com/ebonetti/absorbingmarkovchain/...;
-  WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain;
+  WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain
   '
 - docker run -d --name test-env test-env sleep 600
 - docker ps -a
