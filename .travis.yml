@@ -15,19 +15,16 @@ before_install:
 - |
   docker build -t test-env -<<<'
   FROM ebonetti/golang-petsc
-  RUN  set -eux; \
-  go get honnef.co/go/tools/cmd/megacheck/...; \
-  go get github.com/mattn/goveralls/...; \
-  go get github.com/ebonetti/absorbingmarkovchain/...;
+  RUN go get github.com/ebonetti/absorbingmarkovchain/...;
   WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain
   '
-- docker run -d --name test-env test-env sleep 600
-- docker ps -a
+- go get honnef.co/go/tools/cmd/megacheck/...;
+- go get github.com/mattn/goveralls/...;
 
 script:
-- docker exec test-env go test -v -race ./...
-- docker exec test-env megacheck ./...
-- docker exec test-env goveralls
+- docker run test-env go test -v -race ./...
+- megacheck ./...
+- goveralls
 
 after_script:
 - docker rm -f test-env
