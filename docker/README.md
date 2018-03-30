@@ -1,0 +1,1 @@
+Petsc-lite installed in a golang environment, mainly used for testing purposes in [github.com/ebonetti/absorbingmarkovchain](https://github.com/ebonetti/absorbingmarkovchain).
