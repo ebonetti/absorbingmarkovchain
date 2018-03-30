@@ -18,12 +18,12 @@ This package can be installed with the go get command:
 
     go get github.com/ebonetti/absorbingmarkovchain
 
-Documentation
--------------
-
-API documentation can be found here: http://godoc.org/github.com/ebonetti/absorbingmarkovchain
-
 Dependencies
 -------------
 
-This package depends on: `make`, `gcc` and `petsc`. The associated dockerfile provides a complete environment in which use the package.
+This package depends on `PETSc`. The associated dockerfile provides a complete environment in which use this package, such docker image can be found at [ebonetti/golang-petsc](https://hub.docker.com/r/ebonetti/golang-petsc/). Otherwise `PETSc` can be installed following the same steps as in the dockerfile or in [the PETSc installation manual page](https://www.mcs.anl.gov/petsc/documentation/installation.html).
+
+Documentation
+-------------
+
+API documentation can be found in the [associated godoc reference](https://godoc.org/github.com/ebonetti/absorbingmarkovchain).
