@@ -14,7 +14,8 @@ RUN set -eux; \
     mv petsc* petsc; \
     cd $PETSC_DIR; \
     ./configure --with-cc=gcc --with-cxx=0 --with-fc=0 --with-debugging=0 \
-        COPTFLAGS='-O3 -march=native -mtune=native' \
+#        Optimization: if compiled somewhere, may not work elsewhere.
+#        COPTFLAGS='-O3 -march=native -mtune=native' \
         --download-mpich --download-f2cblaslapack; \
     make all test; \
     rm -rf /tmp/* /var/tmp/*;
