@@ -1,4 +1,4 @@
-// Package absorbingmarkovchain provides defines for computing absorption probabilities of absorbing markov chains.
+// Package absorbingmarkovchain provides primitives for computing absorption probabilities of absorbing markov chains.
 package absorbingmarkovchain
 
 import (
@@ -59,8 +59,8 @@ func (chain *AbsorbingMarkovChain) AbsorptionProbabilities(ctx context.Context) 
 }
 
 // AbsorptionAssignments calculates a majority assignment from absorption probabilities.
-func (chain *AbsorbingMarkovChain) AbsorptionAssignments(ctx context.Context) (assigner func(from uint32) (to uint32, ok bool), err error) {
-	fail := func(e error) (func(from uint32) (to uint32, ok bool), error) {
+func (chain *AbsorbingMarkovChain) AbsorptionAssignments(ctx context.Context) (assigner map[uint32]uint32, err error) {
+	fail := func(e error) (map[uint32]uint32, error) {
 		assigner, err = nil, e
 		return assigner, err
 	}
@@ -87,7 +87,7 @@ func (chain *AbsorbingMarkovChain) AbsorptionAssignments(ctx context.Context) (a
 	ttn2Old := silentFail(ttn.ToOld)
 	tan2Old := silentFail(tan.ToOld)
 
-	assignment := make(map[uint32]uint32, len(fuzzyAssignments[0]))
+	assigner = make(map[uint32]uint32, len(fuzzyAssignments[0]))
 	for tnID := range fuzzyAssignments[0] {
 		perm := rand.Perm(len(fuzzyAssignments))
 		bestv, bestw := -1, -1.0
@@ -98,17 +98,14 @@ func (chain *AbsorbingMarkovChain) AbsorptionAssignments(ctx context.Context) (a
 				bestw = w
 			}
 		}
-		assignment[ttn2Old(tnID)] = tan2Old(bestv)
+		assigner[ttn2Old(tnID)] = tan2Old(bestv)
 	}
 
 	if err != nil {
 		return fail(err)
 	}
 
-	return func(from uint32) (to uint32, ok bool) {
-		to, ok = assignment[from]
-		return
-	}, nil
+	return
 }
 
 func (chain *AbsorbingMarkovChain) absorptionProbabilities(ctx context.Context, clean func()) (fuzzyAssignments [][]float64, ttn, tan translator, err error) {

@@ -33,7 +33,7 @@ func TestAbsorptionAssignments(t *testing.T) {
 		t.Error(err)
 	}
 	for tn, nodes := range tn2anw {
-		an, ok := assigner(tn)
+		an, ok := assigner[tn]
 		switch {
 		case !ok:
 			t.Errorf("%v is not a valid node, but it should be.", tn)

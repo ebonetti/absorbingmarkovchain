@@ -9,18 +9,18 @@ services:
   - docker
 
 before_install:
-- docker pull ebonetti/golang-petsc
-- |
-  docker build -t test-env -<<<'
-  FROM ebonetti/golang-petsc
-  RUN  set -eux; \
-  go get honnef.co/go/tools/cmd/megacheck/...; \
-  go get github.com/mattn/goveralls/...; \
-  go get github.com/ebonetti/absorbingmarkovchain/...;
-  WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain
-  '
-- docker run -d -e COVERALLS_TOKEN --name test-env test-env sleep 600
-- docker ps -a
+  - docker pull ebonetti/golang-petsc
+  - |
+    docker build -t test-env -<<<'
+    FROM ebonetti/golang-petsc
+    RUN  set -eux; \
+    go get honnef.co/go/tools/cmd/megacheck/...; \
+    go get github.com/mattn/goveralls/...; \
+    go get github.com/ebonetti/absorbingmarkovchain/...;
+    WORKDIR /go/src/github.com/ebonetti/absorbingmarkovchain
+    '
+  - docker run -d -e COVERALLS_TOKEN --name test-env test-env sleep 600
+  - docker ps -a
 
 script:
 - docker exec test-env go test -v -race ./...
