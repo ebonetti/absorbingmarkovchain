@@ -75,6 +75,7 @@ func amcSample() (chain *AbsorbingMarkovChain, tn2anw map[uint32][]implicitWeigh
 			func(from, to uint32) (weight float64, err error) { return 1, nil },
 		},
 		absorbingNodes,
+		"",
 	}
 	return
 }

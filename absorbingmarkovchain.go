@@ -17,7 +17,7 @@ import (
 )
 
 // New creates a new absorbing markov chain.
-func New(nodes, absorbingNodes *roaring.Bitmap, edges func(from uint32) (to []uint32), weighter func(from, to uint32) (weight float64, err error)) *AbsorbingMarkovChain {
+func New(tmpDir string, nodes, absorbingNodes *roaring.Bitmap, edges func(from uint32) (to []uint32), weighter func(from, to uint32) (weight float64, err error)) *AbsorbingMarkovChain {
 	return &AbsorbingMarkovChain{
 		wDGraph{
 			dGraph{
@@ -27,6 +27,7 @@ func New(nodes, absorbingNodes *roaring.Bitmap, edges func(from uint32) (to []ui
 			weighter,
 		},
 		absorbingNodes,
+		tmpDir,
 	}
 }
 
@@ -34,6 +35,7 @@ func New(nodes, absorbingNodes *roaring.Bitmap, edges func(from uint32) (to []ui
 type AbsorbingMarkovChain struct {
 	wDGraph
 	absorbingNodes *roaring.Bitmap
+	tmpDir         string
 }
 
 // AbsorptionProbabilities calculates absorption probabilities for the current absorbing markov chain.
@@ -119,7 +121,7 @@ func (chain *AbsorbingMarkovChain) absorptionProbabilities(ctx context.Context, 
 	}
 
 	var tmpDir string
-	if tmpDir, err = ioutil.TempDir(".", "."); err != nil {
+	if tmpDir, err = ioutil.TempDir(chain.tmpDir, "."); err != nil {
 		return fail(errors.Wrap(err, "AbsorbingMarkovChain Error: unable to create a temporary directory."))
 	}
 	defer os.RemoveAll(tmpDir)

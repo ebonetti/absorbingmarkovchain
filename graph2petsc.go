@@ -76,7 +76,8 @@ func _graph2Petsc(chain *AbsorbingMarkovChain, write func(...interface{})) (ttn,
 	if err != nil {
 		return fail(err)
 	}
-	cb, err := compressedB(&AbsorbingMarkovChain{wg, chain.absorbingNodes})
+
+	cb, err := compressedB(&AbsorbingMarkovChain{wg, chain.absorbingNodes, chain.tmpDir})
 	if err != nil {
 		return fail(err)
 	}
