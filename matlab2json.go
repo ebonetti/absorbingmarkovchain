@@ -73,7 +73,16 @@ func (r *matlab2Json) refill() (err error) {
 	//ignore eventual errors if len(buffer)>0
 
 	if buffer[0] != '\n' || buffer[blen-2] != '\n' {
-		return errors.Errorf("AbsorbingMarkovChain Error: invalid input error.")
+		from := blen - 1000
+		if from < 0 {
+			from = 0
+		}
+
+		message := "AbsorbingMarkovChain Error: invalid input, ends with ...'" + string(buffer[from:]) + "'."
+		if err != nil {
+			return errors.Wrap(err, message)
+		}
+		return errors.Errorf(message)
 	}
 
 	buffer[0] = '['
