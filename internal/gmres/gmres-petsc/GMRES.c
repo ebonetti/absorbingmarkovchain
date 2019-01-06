@@ -57,6 +57,7 @@ int main(int argc,char **argv) {
 
     //Free work space.
     ierr = PetscViewerDestroy(&ifd);CHKERRQ(ierr);
+    ierr = PetscViewerFlush(ofd);CHKERRQ(ierr);
     ierr = PetscViewerPopFormat(ofd); CHKERRQ(ierr);
     ierr = PetscViewerDestroy(&ofd);CHKERRQ(ierr);
     ierr = KSPDestroy(&ksp);CHKERRQ(ierr);
