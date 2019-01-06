@@ -73,7 +73,7 @@ func (r *matlab2Json) refill() (err error) {
 	//ignore eventual errors if len(buffer)>0
 
 	if buffer[0] != '\n' || buffer[blen-2] != '\n' {
-		from := blen - 1000
+		from := blen - 100
 		if from < 0 {
 			from = 0
 		}
